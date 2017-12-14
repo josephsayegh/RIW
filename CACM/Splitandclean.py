@@ -1,9 +1,9 @@
 import re
 import os
 
-def parse():
+def parse(file):
 
-    with open("cacm.all","r") as cacm:
+    with open(file,"r") as cacm:
         newpath = r'./Collection' 
         if not os.path.exists(newpath):
             os.makedirs(newpath)
@@ -29,4 +29,4 @@ def parse():
                 collection.write(line)
         collection.close()      
 
-a = parse()
+a = parse("cacm.all")
