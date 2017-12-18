@@ -1,5 +1,6 @@
 import re
 import os
+from nltk.tokenize import RegexpTokenizer
 
 def parse(file):
 
@@ -25,8 +26,23 @@ def parse(file):
                 line_section = line
             elif interesting_sections.match(line_section):
                 #when we are placed in one of our interesting sections KWT, we write in the document
-                line = re.sub('\n', ' ', line)
-                collection.write(line)
+                line = stopwords(line)
+                #transformer la liste en phrase
+                collection.write(line + " ")
         collection.close()      
+
+
+def stopwords(line):
+    tokenizer = RegexpTokenizer(r'\w+')
+    with open("common_words","r") as common_words:
+        common_list = []
+        for word in common_words:
+            word = re.sub('[.\n]', '', word)
+            common_list.append(word)   
+    line_list = tokenizer.tokenize(line)  
+    line_list = [word.lower() for word in line_list]
+    cleaned_list = list(set(line_list)-set(common_list))
+    line = " ".join(cleaned_list)    
+    return line  
 
 a = parse("cacm.all")

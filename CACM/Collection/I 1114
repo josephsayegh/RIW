@@ -1,1 +1,1 @@
-Generating a Canonical Prefix Encoding* Computer programs for generating a minimum-redundancy exhaustive prefix encoding are described.   One program generates a Huffman frequency tree, another determines the structure functions of an encoding,  and a third program assigns codes. 
+prefix canonical generating encoding redundancy programs minimum generating computer exhaustive prefix encoding generates program frequency tree huffman determines encoding functions structure assigns program codes 

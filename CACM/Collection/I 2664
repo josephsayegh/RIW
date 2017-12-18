@@ -1,1 +1,1 @@
-Parallelism in Tape-Sorting Two methods for employing parallelism in tape-sorting are presented.  Method A is the natural  way to use parallelism. Method B is new.  Both approximately achieve the goal of reducing the processing  time by a divisor which is the number of processors. tape sorting, parallelism, external sorting, queues, stacks 
+tape parallelism sorting methods tape employing parallelism sorting method presented natural method parallelism approximately achieve processing goal reducing time processors number divisor stacks external tape queues parallelism sorting 

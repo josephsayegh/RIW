@@ -1,1 +1,1 @@
-Another Recursion Induction Principle An inductive method for proving things about recursively defined functions is described.  It  is shown to be useful for proving partial functions equivalent and thus applicable in proofs about interpreters  for programming languages. recursion, induction, correctness, proofs, compiler correctness 
+principle induction recursion method inductive proving things functions defined recursively functions partial proving shown equivalent interpreters applicable proofs languages programming proofs correctness compiler induction recursion 
