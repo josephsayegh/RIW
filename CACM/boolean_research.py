@@ -1,5 +1,7 @@
 import re
 import pickle
+import itertools
+
 
 class NotInDictionaryError(Exception):
     pass
@@ -35,12 +37,11 @@ def recherche_dans_cleaned_request(cleaned_request):
     not_list = cleaned_request['not_list']
     not_dic = recherche(not_list)
     not_result = pre_intersect(not_dic)
-    not_result = intersect_many(not_result)
+    not_result = union_many(not_result)
     or_list = cleaned_request['or_list']
     or_dic = recherche(or_list)
     or_result = pre_intersect(or_dic)
-    # besoin de joindre les listes de and_result et celles de or_results
-    joined = and_result + or_result # ceci ne marche pas car and_result et or_result sont des listes de listes
+    joined = and_result + or_result
     joined.sort()
     cleaned = list(set(joined) - set(not_result))
     return cleaned
@@ -107,6 +108,22 @@ def intersect_many(list_of_lists):
     """
     while len(list_of_lists) > 1:
         list_of_lists[1] = intersect(list_of_lists[0], list_of_lists[1])
+        list_of_lists.pop(0)
+    try:
+        return list_of_lists[0]
+    except IndexError:
+        return []
+
+def union(a, b):
+    """ return the union of two lists """
+    return list(set(a) | set(b)) 
+
+def union_many(list_of_lists):
+    """
+    fonction qui applique union a une liste de liste, 2 a 2
+    """
+    while len(list_of_lists) > 1:
+        list_of_lists[1] = union(list_of_lists[0], list_of_lists[1])
         list_of_lists.pop(0)
     try:
         return list_of_lists[0]
