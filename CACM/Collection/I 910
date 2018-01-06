@@ -1,1 +1,1 @@
-trap instruction selective 7090 
+selective trap 7090 instruction 
