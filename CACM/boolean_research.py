@@ -34,19 +34,24 @@ def recherche_dans_cleaned_request(cleaned_request):
     and_dic = recherche(and_list)
     and_result = pre_intersect(and_dic)
     and_result = intersect_many(and_result)
+    and_result.sort()
     # pour avoir une liste de tous les documents qui contiennent les termes en "and"
     not_list = cleaned_request['not_list']
     not_dic = recherche(not_list)
     not_result = pre_intersect(not_dic)
     not_result = union_many(not_result)
+    not_result.sort()
     # pour avoir une liste de tous les documents qui contiennent au moins un des termes en "not"
     or_list = cleaned_request['or_list']
     or_dic = recherche(or_list)
     or_result = pre_intersect(or_dic)
     or_result = union_many(or_result)
+    or_result.sort()
     # pour avoir une liste de tous les documents qui contiennent au moins un des termes en "or"
-    
-    joined = intersect(and_result, or_result)
+    if or_result == []:
+        joined = and_result
+    else:
+        joined = intersect(and_result, or_result)
     joined.sort()
     cleaned = list(set(joined) - set(not_result))
     cleaned.sort()
