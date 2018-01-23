@@ -2,22 +2,22 @@ import os
 import filemapper as fm
 import indexes
 import pickle
-
-def terms_terms_id(path):
-    terms = {}
-    block_list = os.listdir(path)
-    for block in block_list:
-        url = os.path.join(path, block)
-        terms = indexes.create_terms_pairs(url)
-        return terms
-    return terms
-
+import ast
+import time
 
         
 def bsbi(path):
+    """
+    fonction qui prend en entree un path et qui parcours tous les documents dans tous les dossiers du path.
+    chaque dossier est traite comme un block et la fonction va lire dans tous les documents et creer un fichier
+    de tuples (terms, {doc_id: occurences})
+    """
     term_docid = []
     block_list = os.listdir(path)
     docid = 1
+    indexes_folder = 'Stanford_indexes'
+    if not os.path.exists(indexes_folder):
+        os.makedirs(indexes_folder)
     for block in block_list:
         url = os.path.join(path, block)
         documents = os.listdir(url)
@@ -33,41 +33,99 @@ def bsbi(path):
                 docid += 1
         sorted = indexes.tuple_sort(term_docid)
         merged = indexes.tuple_merge(sorted)
-        with open(block,'w') as opened_doc:
+        creation_path = os.path.join(indexes_folder, block)
+        with open(creation_path,'w') as opened_doc:
             for key, value in merged.items():
-                opened_doc.write('{},{}\n'.format(key, value))
+                opened_doc.write('{}|{}\n'.format(key, value))
             # pickle.dump(merged, opened_doc, protocol=pickle.HIGHEST_PROTOCOL)
         term_docid = []
 
-def merge(first_index, second_index):
-    first_buffer_lower = 0
-    first_buffer_upper = 5000
-    second_buffer_lower = 0
-    second_buffer_upper = 5000
-    first_memory = ""
-    second_memory = ""
-    with open(first_index,'r') as first_index:
-        with open(second_index, 'r') as second_index:
-            for index, line in enumerate(first_index):
-                if index >= first_buffer_lower and index <= first_buffer_upper:
-                    first_memory = line
+def merge(first_index, second_index, combined_index):
+    """
+    fonction qui prend en entree 2 indexes a merger et un fichier dans lequel les merger et elle les merge
+    """
+    combined_index = open(combined_index, 'w')
+    first_lower_limit = 0
+    first_upper_limit = 5000
+    second_lower_limit = 0
+    second_upper_limit = 5000
+    first_memory_buffer = read_document(first_index, first_lower_limit, first_upper_limit)
+    second_memory_buffer = read_document(second_index, second_lower_limit, second_upper_limit)
+    while first_memory_buffer != [] and second_memory_buffer != []:
+        while first_memory_buffer != [] and second_memory_buffer != []:
+            to_write = compare_memory_buffers(first_memory_buffer, second_memory_buffer)
+            combined_index.write('{}|{}\n'.format(to_write[0], to_write[1]))
+        first_lower_limit = first_upper_limit - len(first_memory_buffer)
+        first_upper_limit = first_lower_limit + first_upper_limit
+        second_lower_limit = second_upper_limit - len(second_memory_buffer)
+        second_upper_limit = second_lower_limit + second_upper_limit
+        first_memory_buffer = read_document(first_index, first_lower_limit, first_upper_limit)
+        second_memory_buffer = read_document(second_index, second_lower_limit, second_upper_limit)
+        
+def compare_memory_buffers(first_memory_buffer, second_memory_buffer):  
+    """
+    prend deux listes de tuples (term, {doc_id: occurrence}) et les merge ensemble
+    """      
+    if first_memory_buffer[0][0] < second_memory_buffer[0][0]:
+        to_write = first_memory_buffer[0]
+        del first_memory_buffer[0]
+        return to_write
+    elif first_memory_buffer[0][0] > second_memory_buffer[0][0]:
+        to_write = second_memory_buffer[0]
+        del second_memory_buffer[0]
+        return to_write
+    elif first_memory_buffer[0][0] == second_memory_buffer[0][0]:
+        first_posting = first_memory_buffer[0][1]
+        second_posting = second_memory_buffer[0][1]
+        merged_posting = first_posting.copy()
+        merged_posting.update(second_posting)
+        to_write = first_memory_buffer[0][0], merged_posting
+        del first_memory_buffer[0]
+        del second_memory_buffer[0]
+        return to_write
 
 def read_document(document, lower_line, upper_line):
+    """
+    prend en entree un document et les limites inferieures et superieures de lignes et retourne les lignes 
+    de ce document qui sont entre ces limites
+    """
+    result = []
     with open(document, 'r') as document:
         for index, line in enumerate(document):
             if index>= lower_line and index <= upper_line:
-                return line
+                to_tuple = line.strip().split('|')
+                cleaned = to_tuple[0], ast.literal_eval(to_tuple[1])
+                result.append(tuple(cleaned))
+        return result
 
 
+def merge_all(path):
+    """
+    fonction qui prend un path en entree et qui va trouver les fichiers contenants uniquement des chiffres
+    dans ce path. elle va les merge 2 a 2 et ensuite merge les resultats 2 a 2 jusqu'a obtenir un index final
+    """
+    raw_list = os.listdir(path)
+    block_list = []
+    for i in raw_list:
+        if i.isdigit() == True:
+            block_list.append(i)
+    while len(block_list) > 1:
+        if len(block_list) > 2:
+            new_index_name = str(block_list[0]) + "+" + str(block_list[1])
+        else:
+            new_index_name = 'final_index'
+        first_index = os.path.join(path, block_list[0])
+        second_index = os.path.join(path, block_list[1])
+        block_list.append(new_index_name)
+        new_index = os.path.join(path, new_index_name)
+        merge(first_index, second_index, new_index)
+        del block_list[1]
+        del block_list[0]
+        print (block_list)
 
-
-
-
-
-        #reste a faire la partie merge entre les fichiers
-
-#a = bsbi('Stanford/pa1-data')   
-a = read_document('0', 1, 10)
+start_time = time.time()
+# a = bsbi('Stanford/pa1-data')   
+a = merge_all('Stanford_indexes')
 print(a)
-# b = test('2')
-# print(b)
+end_time = time.time()
+print(end_time - start_time)
