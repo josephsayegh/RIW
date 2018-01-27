@@ -1,1 +1,1 @@
-structure phrase grammars global free context parser 
+structure context global phrase grammars free parser 

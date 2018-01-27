@@ -1,11 +1,17 @@
+"""
+Ce fichier permet de parcourir le fichier CACM et le splitter en fichiers par document.
+Nous prenons uniquement les sections qui nous intéressent.
+Les mots sont comparés aux stopwords et tokenizés avant d'être stockés
+"""
+
 import re
 import os
 from nltk.tokenize import RegexpTokenizer
 
 def parse(file):
     """
-    fonction qui parse cacm.all en prenant uniquement les champs
-    qui nous interessent
+    fonction qui parse cacm.all en prenant uniquement les sections
+    qui nous intéressent
     """
     with open(file, 'r') as cacm:
         newpath = r'./Collection'
@@ -13,22 +19,20 @@ def parse(file):
             os.makedirs(newpath)
         documents_pattern = re.compile("^.I[ ][0-9]{1,4}[\n]$")
         sections_pattern = re.compile("^.[A-Z]?[\n]$")
+        # les sections qui nous intéressent
         interesting_sections = re.compile("^.[KWT]?[\n]$")
-        # these are the interesting sections we need
-        collection = open('I0', 'w')
-        # serves only to be closed, for the loop
+        collection = open('I0', 'w') # sert uniquement à fermer un fichier à la fin de la première boucle
         for line in cacm:
             if documents_pattern.match(line) is not None:
-                # this is to find the documents headers and create the files
                 title = re.sub('[.\n]', '', line)
-                collection.close() #closes the opened document
+                collection.close() # fermeture du fichier précedemment ouvert
                 filepath = os.path.join(newpath, title)
                 collection = open(filepath, 'w')
             elif sections_pattern.match(line) is not None:
-                # this lets us know in which sections we are placed
+                # pour savoir dans quelle section nous sommes
                 line_section = line
             elif interesting_sections.match(line_section):
-                # when we are placed in one of our interesting sections KWT, we write in the document
+                # Lorsque nous somme dans une des sections intéressantes KWZ, on écrit dans le document
                 line = stopwords(line)
                 # transformer la liste en phrase
                 collection.write(line + " ")
@@ -53,4 +57,5 @@ def stopwords(line):
     line = " ".join(cleaned_list)
     return line
 
-parsed = parse("cacm.all")
+if __name__ == "__main__":
+    parsed = parse("cacm.all")

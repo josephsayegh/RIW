@@ -1,3 +1,4 @@
+import ast
 import re
 import pickle
 import itertools
@@ -26,28 +27,29 @@ def clean_request(request):
             cleaned_request['and_list'].append(term)
     return cleaned_request
 
-def recherche_dans_cleaned_request(cleaned_request):
+def recherche_dans_cleaned_request(cleaned_request, inversed_index):
     """
-    fonction qui mange le dictionnaire de la fonction d'avant et qui donne la liste de docs qui correspondent
+    fonction qui prends en entrée le dictionnaire de la fonction d'avant 
+    et qui donne la liste de docs qui correspondent
     """
+    # pour avoir une liste de tous les documents qui contiennent les termes en "and"
     and_list = cleaned_request['and_list']
-    and_dic = recherche(and_list)
+    and_dic = recherche_stanford(and_list, inversed_index)
     and_result = pre_intersect(and_dic)
     and_result = intersect_many(and_result)
     and_result.sort()
-    # pour avoir une liste de tous les documents qui contiennent les termes en "and"
+    # pour avoir une liste de tous les documents qui contiennent au moins un des termes en "not"
     not_list = cleaned_request['not_list']
-    not_dic = recherche(not_list)
+    not_dic = recherche_stanford(not_list, inversed_index)
     not_result = pre_intersect(not_dic)
     not_result = union_many(not_result)
     not_result.sort()
-    # pour avoir une liste de tous les documents qui contiennent au moins un des termes en "not"
+    # pour avoir une liste de tous les documents qui contiennent au moins un des termes en "or"
     or_list = cleaned_request['or_list']
-    or_dic = recherche(or_list)
+    or_dic = recherche_stanford(or_list, inversed_index)
     or_result = pre_intersect(or_dic)
     or_result = union_many(or_result)
     or_result.sort()
-    # pour avoir une liste de tous les documents qui contiennent au moins un des termes en "or"
     if or_result == []:
         joined = and_result
     else:
@@ -57,37 +59,41 @@ def recherche_dans_cleaned_request(cleaned_request):
     cleaned.sort()
     return cleaned
 
-def find_term_id(term):
+def find_term_id(term, terms_dictionary):
     """
-    fonction qui mange un term et rend son term_id dans la collection
+    fonction qui prend en entrée un term et la localisation du terms_dictionary
+     et rend son term_id dans la collection
     """
-    with open('terms_dictionary', 'rb') as terms_dictionary:
+    with open(terms_dictionary, 'rb') as terms_dictionary:
         terms_dictionary = pickle.load(terms_dictionary)
         try:
             term_id = terms_dictionary[term]
         except KeyError:
-            #raise NotInDictionaryError('The term {} is not in our dictionary'.format(term))
-            #term_id = 'not in dictionary'
             term_id = ""
     return term_id
 
-def get_posting(term_id):
+
+def get_posting_stanford(term_id, inversed_index):
     """
-    fonction qui mange un term_id et qui donne retourne un dictionaire des {doc_id: occurences}
+    fonction qui prends en entrée un mot et la localisation de inversed_index
+    et qui donne un dictionaire des {doc_id: occurences}
     """
-    with open('inversed_index', 'rb') as inversed_index:
-        inversed_index = pickle.load(inversed_index)
-        try:
-            term_posting = inversed_index[term_id]
-        except KeyError:
-            #raise NotInCollectionError('The term {} is not in the collection'.format(term_id))
-            #term_posting = 'not in collection'
-            term_posting = ""
+    term_posting = dict({})
+    line = "line"
+    with open(inversed_index, 'r') as inversed_index:
+        line = inversed_index.readline().strip()
+        while term_posting == {} and line != "":
+            posting_list = line.split("|")
+            if posting_list[0] == term_id:
+                term_posting = ast.literal_eval(posting_list[1])
+            else:
+                line = inversed_index.readline().strip()
     return term_posting
+
 
 def intersect(list_1, list_2):
     """
-    fonction qui mange 2 listes tries et qui donne une liste representant 
+    fonction qui prend en entrée 2 listes triées et qui donne une liste représentant 
     l'intersection des 2 listes
     IL FAUT TRIER LES LISTES AVANT
     """
@@ -105,7 +111,7 @@ def intersect(list_1, list_2):
 
 def pre_intersect(words_postings_dic):
     """
-    fonction qui mange un dictionnaire de {mot:[doc_ids qui le contiennent]}
+    fonction qui prend en entrée un dictionnaire de {mot:[doc_ids qui le contiennent]}
     et qui donne les listes de docs_ids
     """
     doc_ids = []
@@ -115,7 +121,7 @@ def pre_intersect(words_postings_dic):
 
 def intersect_many(list_of_lists):
     """
-    fonction qui applique intersect a une liste de liste, 2 a 2
+    fonction qui applique intersect à une liste de liste, 2 à 2
     """
     while len(list_of_lists) > 1:
         list_of_lists[1] = intersect(list_of_lists[0], list_of_lists[1])
@@ -126,12 +132,12 @@ def intersect_many(list_of_lists):
         return []
 
 def union(a, b):
-    """ return the union of two lists """
+    """ fonction qui retourne l'union de deux listes """
     return list(set(a) | set(b)) 
 
 def union_many(list_of_lists):
     """
-    fonction qui applique union a une liste de liste, 2 a 2
+    fonction qui applique union à une liste de liste, 2 à 2
     """
     while len(list_of_lists) > 1:
         list_of_lists[1] = union(list_of_lists[0], list_of_lists[1])
@@ -141,15 +147,15 @@ def union_many(list_of_lists):
     except IndexError:
         return []
 
-def recherche(words_list):
+
+def recherche_stanford(words_list, inversed_index):
     """
-    fonction qui mange une liste de mots et qui
+    fonction qui prend en entrée une liste de mots et qui
     donne un dictionnaire {mot: [doc_ids qui le contiennent]}
     """
     result = {}
     for word in words_list:
-        term_id = find_term_id(word)
-        posting = get_posting(term_id)
+        posting = get_posting_stanford(word, inversed_index)
         doc_ids = []
         try:
             for doc_id in posting.keys():
@@ -157,4 +163,14 @@ def recherche(words_list):
             result[word] = doc_ids
         except AttributeError:
             pass
+    for word in result:
+        result[word].sort()
     return result
+
+def find_document_from_docid(list_of_docids, docid_dict_path):
+    doc_list = []
+    with open(docid_dict_path, 'rb') as docid_dictionary:
+        docid_dictionary = pickle.load(docid_dictionary)
+        for docid in list_of_docids:
+            doc_list.append(docid_dictionary[docid])
+    return doc_list
