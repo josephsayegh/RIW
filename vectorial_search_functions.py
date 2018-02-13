@@ -6,7 +6,8 @@ import math
 from nltk.tokenize import RegexpTokenizer
 import filemapper as fm
 import ast
-from boolean_research_functions_cacm import find_term_id, get_posting
+from boolean_research_functions_cacm import find_term_id
+import time
 
 
 class NotInDictionaryError(Exception):
@@ -14,10 +15,17 @@ class NotInDictionaryError(Exception):
 class NotInCollectionError(Exception):
     pass
 
+def open_inversed_index(inversed_index):
+    with open(inversed_index, 'rb') as inversed_index:
+        inversed_index = pickle.load(inversed_index)
+    return inversed_index
 
+inversed_index = open_inversed_index("CACM/inversed_index")
+
+collection_length = len(os.listdir("CACM/Collection"))
 
 def query_indexation(query):
-    """fonction qui transforme la requête en un indexe, comme les documents"""
+    """fonction qui transforme la requête en un index, comme les documents"""
     result = {}
     result2 = {}
     tokenizer = RegexpTokenizer(r'\w+')
@@ -36,9 +44,8 @@ def query_indexation(query):
     return result2
 
 
-
-def vectorial_search(query, inversed_index, collection):
-    """fonction qui sort la liste des 10 documents les plus similaires à une requête
+def vectorial_search(query):
+    """fonction qui sort la liste des 5 documents les plus similaires à une requête
     c'est l'algo du cours. Il est un peu compliqué à lire en conséquence."""
     with open("CACM/documents_norms", 'rb') as norms:
         norms = pickle.load(norms)       #liste des normes de chaque doc de la collection
@@ -49,21 +56,21 @@ def vectorial_search(query, inversed_index, collection):
         sorted_scores = {}      #ce qu'il faudra retourner: la liste des 5 résultats les plus pertinents
         scores_tuples = []      #liste des tuples (doc_id, score), de la taille de scores
         refined_query = query_indexation(query)   #requête retraitée comme un index
-        for j in range(1, len(os.listdir(collection)) + 2):
+        for j in range(1, collection_length + 2):
             scores.append(0)                 #on met tous les scores à zéro
         for term in refined_query:
-            w.append(weight_term_frequency_in_collection(term, inversed_index, collection) * (1 + math.log10(refined_query[term])))   # création du poids du ième terme de la requête
+            w.append(weight_term_frequency_in_collection(term) * (1 + math.log10(refined_query[term])))   # création du poids du ième terme de la requête
             nq += w[i] * w[i]
-            if term in open_inversed_index(inversed_index):
-                L = open_inversed_index(inversed_index)[term]
+            if term in inversed_index:
+                L = inversed_index[term]
             else:
                 L = ""
             for j in L:
-                scores[j] += total_weight(term, j, inversed_index, collection) * w[i]
+                scores[j] += total_weight(term, j) * w[i]
             i += 1
-        for j in range(1, len(os.listdir(collection))):
+        for j in range(1, collection_length):
             if norms[j] != 0:
-                scores[j] = scores[j] / (math.sqrt(nq) * math.sqrt(norms[j]))
+                scores[j] = scores[j] / (math.sqrt(nq) * norms[j])
                 scores_tuples.append((j, scores[j]))
         if max(scores) == 0:
             return "Sorry, no document matches your query"
@@ -73,28 +80,21 @@ def vectorial_search(query, inversed_index, collection):
     return sorted_scores
 
 
-def open_inversed_index(inversed_index):
-    with open(inversed_index, 'rb') as inversed_index:
-        inversed_index = pickle.load(inversed_index)
-    return inversed_index
-
-
-def weight_term_frequency_in_doc(term_id, doc_id, inversed_index):
+def weight_term_frequency_in_doc(term_id, doc_id):
     """fonction qui calcule le poids d'un terme dans un doc"""
     result = 0
     try:
-        L = get_posting(term_id, inversed_index)
+        L = inversed_index[term_id]
     except KeyError:
         L = ""
     if doc_id in L:
         result = 1 + math.log10(int(L[doc_id]))
     return result
 
-def weight_term_frequency_in_collection(term_id, inversed_index, collection):
+def weight_term_frequency_in_collection(term_id):
     """fonction qui calcule le poids d'un terme dans la collection"""
-    collection_length = len(os.listdir(collection))
     try:
-        L = get_posting(term_id, inversed_index)
+        L = inversed_index[term_id]
     except KeyError:
         L = ""
     docs_containing_term = len(L)
@@ -103,41 +103,18 @@ def weight_term_frequency_in_collection(term_id, inversed_index, collection):
     else:
         return 0
 
-def total_weight(term, doc_id, inversed_index, collection):
+def total_weight(term_id, doc_id):
     """fonction qui calcule le poids total en multipliant les deux poids précédents"""
-    return (weight_term_frequency_in_doc(term, doc_id, inversed_index) * weight_term_frequency_in_collection(term, inversed_index, collection))
-
-
-def get_terms_in_document(doc_id, inversed_index):
-    """
-    crée la liste des term_id contenus dans le doc relatif au doc_id
-    """
-    terms_in_doc = []
-    for term_id in inversed_index:
-        if doc_id in inversed_index[term_id]:
-            terms_in_doc.append(term_id)
-    return terms_in_doc
+    return (weight_term_frequency_in_doc(term_id, doc_id) * weight_term_frequency_in_collection(term_id))
 
 
 
-def norm_build(inversed_index, collection):
-    """
-    crée une liste contenant les normes de chaque document à partir de l'index inversé et de la collection.
-    Celle-ci sera utile pour optimiser la recherche vectorielle.
-    """
-    inversed_index = open_inversed_index(inversed_index)
-    collection_length = len(os.listdir(collection))
-    tf = {}
-    idf = {}
-    w = []
-    norm = {}
-    for term, term_postings in inversed_index.items():
-        for doc, doc_appearances in term_postings.items():
-            tf[term] = (doc, 1 + math.log10(doc_appearances))
-            idf[term] = math.log10(collection_length/len(term_postings))
-    for document in range(1, len(os.listdir(collection)) + 1):
-        w.append(0)
-        for term in get_terms_in_document(document, inversed_index):
-            w[document] += (tf[term][1] * idf[term]) ** 2
-        norm[document] = math.sqrt(w[document])
-    return norm
+
+if __name__ == "__main__":
+    requete = input("Tappez votre requete: ")
+    start_time = time.time()
+    result = vectorial_search(requete)
+    print(result)
+    end_time = time.time()
+    total_time = end_time - start_time
+    print(total_time)
