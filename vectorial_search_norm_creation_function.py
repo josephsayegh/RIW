@@ -1,4 +1,4 @@
-from vectorial_search_functions import open_inversed_index
+from vectorial_search_functions_cacm import open_inversed_index
 import re
 import os
 import pickle
@@ -35,14 +35,17 @@ def norm_build(inversed_index, collection):
     for document in range(1, len(os.listdir(collection)) + 1):
         w.append(0)
         for term in get_terms_in_document(document, inversed_index):
-            w[document] += (tf[term][1] * idf[term]) ** 2
-        norm[document] = math.sqrt(w[document])
+            w[document-1] += (tf[term][1] * idf[term]) ** 2
+        norm[document] = math.sqrt(w[document-1])
     return norm
 
 
 if __name__ == "__main__":
 
     norms = norm_build('CACM/inversed_index','CACM/Collection')
+    #norms = norm_build('Stanford/inversed_index','Stanford/Collection')
     
-    with open('CACM/documents_norms', 'wb') as documents_norms:
-        pickle.dump(norms, documents_norms, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('CACM/documents_norms', 'wb') as cacm_documents_norms:
+        pickle.dump(norms, cacm_documents_norms, protocol=pickle.HIGHEST_PROTOCOL)
+    # with open('Stanford/documents_norms', 'wb') as stanford_documents_norms:
+    #     pickle.dump(norms, stanford_documents_norms, protocol=pickle.HIGHEST_PROTOCOL)
