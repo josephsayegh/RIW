@@ -1,11 +1,7 @@
-import re
 import os
 import pickle
-import itertools
 import math
 from nltk.tokenize import RegexpTokenizer
-import filemapper as fm
-import ast
 from boolean_research_functions_cacm import find_term_id
 import time
 
@@ -44,7 +40,7 @@ def query_indexation(query):
     return result2
 
 
-def vectorial_search(query):
+def vectorial_search(query, nb_of_results):
     """fonction qui sort la liste des 5 documents les plus similaires à une requête
     c'est l'algo du cours. Il est un peu compliqué à lire en conséquence."""
     with open("CACM/documents_norms", 'rb') as norms:
@@ -69,13 +65,13 @@ def vectorial_search(query):
                 scores[j] += total_weight(term, j) * w[i]
             i += 1
         for j in range(1, collection_length):
-            if norms[j] != 0:
+            if (norms[j] != 0) & (nq != 0):
                 scores[j] = scores[j] / (math.sqrt(nq) * norms[j])
                 scores_tuples.append((j, scores[j]))
         if max(scores) == 0:
             return "Sorry, no document matches your query"
         scores_tuples = sorted(scores_tuples, key=lambda colonnes: colonnes[1], reverse=True)
-        for k in range(5):
+        for k in range(nb_of_results):
             sorted_scores[k] = (scores_tuples[k][0], round(scores_tuples[k][1],2))
     return sorted_scores
 
@@ -113,7 +109,7 @@ def total_weight(term_id, doc_id):
 if __name__ == "__main__":
     requete = input("Tappez votre requete: ")
     start_time = time.time()
-    result = vectorial_search(requete)
+    result = vectorial_search(requete, 5)
     print(result)
     end_time = time.time()
     total_time = end_time - start_time
