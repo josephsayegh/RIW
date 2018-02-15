@@ -113,7 +113,7 @@ def total_weight(term_id, doc_id):
 if __name__ == "__main__":
     requete = input("Tappez votre requete: ")
     start_time = time.time()
-    result = vectorial_search(requete, 5)
+    result = vectorial_search(requete, 3203)
     print(result)
     end_time = time.time()
     total_time = end_time - start_time
