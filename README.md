@@ -29,11 +29,20 @@ boolean_research_stanford.py
 Pour effectuer une recherche vectorielle sur CACM:
 Lancer
 ```
-vectorial_search_norm_creation.py
+vectorial_search_norm_creation_cacm.py
 ```
 puis
 ```
-vectorial_search_functions.py
+vectorial_search_functions_cacm.py
+```
+Pour effectuer une recherche vectorielle sur Stanford:
+Lancer (très long)
+```
+vectorial_search_norm_creation_stanford.py
+```
+puis
+```
+vectorial_search_functions_stanford.py
 ```
 Pour afficher la courbe de rappel-précision:
 Placer les deux docs query.text et qrels.text dans le dossier RIW. Lancer 
@@ -54,6 +63,10 @@ splitandclean.py sert ainsi à parser cacm.all et créer un dossier Collection q
 par document, avec les sections qui nous intéressent et les mots déjà tokenizés.
 
 document_dictionary, inversed_index et terms_dictionary sont créés par la suite grâce à ```cacm_index_creator.py```
+
+## /Requetes
+Sera créé grâce à ```splitandClean_queries.py```.
+Contient la liste des 64 requêtes retraitées. Utile pour lancer ```rappel_precision.py``` qui sert à afficher la courbe rappel-précision de CACM.
 
 ## /Stanford
 Contient /pa1-data qui lui même contient la collection entière de Stanford

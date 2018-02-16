@@ -2,8 +2,8 @@ import os
 import pickle
 import math
 from nltk.tokenize import RegexpTokenizer
-from boolean_research_functions_cacm import find_term_id
 import time
+import ast
 
 
 class NotInDictionaryError(Exception):
@@ -13,23 +13,38 @@ class NotInCollectionError(Exception):
 
 def open_inversed_index(inversed_index):
     with open(inversed_index, 'rb') as inversed_index:
-        inversed_index = pickle.load(inversed_index)
-    return inversed_index
+        index = inversed_index
+    return index
 
 def open_norms():
-    with open("Stanforf/documents_norms", 'rb') as norms:
+    with open("Stanford/documents_norms", 'rb') as norms:
         norms = pickle.load(norms)
     return norms
 
 norms = open_norms()
-inversed_index = open_inversed_index("Stanford/inversed_index")
+inversed_index = open_inversed_index("Stanford_indexes/final_index")
+collection_length = 99004
 
-collection_length = len(os.listdir("Stanford/Collection"))
+def get_posting_stanford(term_id):
+    """
+    fonction qui prend en entrée un mot
+    et qui donne un dictionaire des {doc_id: occurences}
+    """
+    term_posting = dict({})
+    line = "line"
+    with open("Stanford_indexes/final_index", 'r') as inversed_index:
+        line = inversed_index.readline().strip()
+        while term_posting == {} and line != "":
+            posting_list = line.split("|")
+            if posting_list[0] == term_id:
+                term_posting = ast.literal_eval(posting_list[1])
+            else:
+                line = inversed_index.readline().strip()
+    return term_posting
 
 def query_indexation(query):
     """fonction qui transforme la requête en un index, comme les documents"""
     result = {}
-    result2 = {}
     tokenizer = RegexpTokenizer(r'\w+')
     query = tokenizer.tokenize(query.lower())
     id = 1
@@ -39,10 +54,7 @@ def query_indexation(query):
         except KeyError:
             result[word] = 1
         id += 1
-    for word in result:
-        word2 = word
-        result2[word] = result[word2]
-    return result2
+    return result
 
 
 def vectorial_search(query, nb_of_results):
@@ -60,19 +72,17 @@ def vectorial_search(query, nb_of_results):
     for term in refined_query:
         w.append(weight_term_frequency_in_collection(term) * (1 + math.log10(refined_query[term])))   # création du poids du ième terme de la requête
         nq += w[i] * w[i]
-        if term in inversed_index:
-            L = inversed_index[term]
-        else:
-            L = ""
+        L = get_posting_stanford(term)
         for j in L:
-            scores[j] += total_weight(term, j) * w[i]
+            if len(L) > 0:
+                scores[j] += (1 + math.log10(int(L[j]))) * (math.log10(collection_length/len(L)))
         i += 1
     for j in range(1, collection_length):
         if (norms[j] != 0) & (nq != 0):
             scores[j] = scores[j] / (math.sqrt(nq) * norms[j])
             scores_tuples.append((j, scores[j]))
     if max(scores) == 0:
-        return "Sorry, no document matches your query"
+        return {}
     scores_tuples = sorted(scores_tuples, key=lambda colonnes: colonnes[1], reverse=True)
     for k in range(nb_of_results):
         sorted_scores[k] = (scores_tuples[k][0], round(scores_tuples[k][1],2))
@@ -83,7 +93,7 @@ def weight_term_frequency_in_doc(term_id, doc_id):
     """fonction qui calcule le poids d'un terme dans un doc"""
     result = 0
     try:
-        L = inversed_index[term_id]
+        L = get_posting_stanford(term_id)
     except KeyError:
         L = ""
     if doc_id in L:
@@ -93,7 +103,7 @@ def weight_term_frequency_in_doc(term_id, doc_id):
 def weight_term_frequency_in_collection(term_id):
     """fonction qui calcule le poids d'un terme dans la collection"""
     try:
-        L = inversed_index[term_id]
+        L = get_posting_stanford(term_id)
     except KeyError:
         L = ""
     docs_containing_term = len(L)
@@ -107,7 +117,7 @@ def total_weight(term_id, doc_id):
     return (weight_term_frequency_in_doc(term_id, doc_id) * weight_term_frequency_in_collection(term_id))
 
 
-
+#print(query_indexation("analysis"))
 
 if __name__ == "__main__":
     requete = input("Tappez votre requete: ")
