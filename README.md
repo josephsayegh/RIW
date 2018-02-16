@@ -27,13 +27,23 @@ Pour effectuer une recherche booléenne sur Stanford:
 boolean_research_stanford.py
 ```
 Pour effectuer une recherche vectorielle sur CACM:
+Lancer
 ```
-Lancer vectorial_search_norm_creation.py puis lancer vectorial_search_functions.py
+vectorial_search_norm_creation.py
+```
+puis
+```
+vectorial_search_functions.py
 ```
 Pour afficher la courbe de rappel-précision:
+Placer les deux docs query.text et qrels.text dans le dossier RIW. Lancer 
 ```
-Placer les deux docs query.text et qrels.text dans le dossier RIW. Lancer SplitandClean_queries.py. Lancer rappel_precision.py
+SplitandClean_queries.py
 ```
+ Lancer 
+ ```
+ rappel_precision.py
+ ```
 
 # Architecure
 
