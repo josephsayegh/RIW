@@ -2,6 +2,14 @@
 
 Moteur de recherche pour le cours de recherche d'information web.
 
+Réponses aux questions: 
+
+## Stanford
+
+1) Nombre de tokens: 337 147
+2) Taille du vocabulaire: 24 745 048
+5) ![alt text](stanford.png)
+
 
 # Installation
 ```
