@@ -12,18 +12,24 @@ class NotInCollectionError(Exception):
     pass
 
 def open_inversed_index(inversed_index):
+    """
+    fonction qui ouvre l'index inversé. Pratique pour éviter d'ouvrir un index déjà ouvert dans une méthode.
+    """
     with open(inversed_index, 'rb') as inversed_index:
         inversed_index = pickle.load(inversed_index)
     return inversed_index
 
 def open_norms():
+    """
+    fonction qui ouvre le doc contenant les normes associées à chaque doc.
+    Pratique pour éviter d'ouvrir le doc alors qu'il a déjà été ouvert dans une méthode.
+    """
     with open("CACM/documents_norms", 'rb') as norms:
         norms = pickle.load(norms)
     return norms
 
 norms = open_norms()
 inversed_index = open_inversed_index("CACM/inversed_index")
-
 collection_length = len(os.listdir("CACM/Collection"))
 
 def query_indexation(query):
@@ -73,7 +79,7 @@ def vectorial_search(query, nb_of_results):
             scores[j] = scores[j] / (math.sqrt(nq) * norms[j])
             scores_tuples.append((j, scores[j]))
     if max(scores) == 0:
-        return "Sorry, no document matches your query"
+        return {}
     scores_tuples = sorted(scores_tuples, key=lambda colonnes: colonnes[1], reverse=True)
     for k in range(nb_of_results):
         sorted_scores[k] = (scores_tuples[k][0], round(scores_tuples[k][1],2))
@@ -113,7 +119,7 @@ def total_weight(term_id, doc_id):
 if __name__ == "__main__":
     requete = input("Tappez votre requete: ")
     start_time = time.time()
-    result = vectorial_search(requete, 3203)
+    result = vectorial_search(requete, 10)     #par défaut, la réponse contient 10 résultats
     print(result)
     end_time = time.time()
     total_time = end_time - start_time
