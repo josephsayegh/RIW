@@ -37,14 +37,14 @@ def data_courbe(requete):
     ainsi qu'une liste precision de même longueur avec les précisions associées à chaque rappel pour la requête.
 
     Méthode: on fait une requête sur tous les documents (3204 résultats) et on liste les résultats dans l'ordre (liste my_answers)
-    le rappel est alors à 1 et la précision à nb_de_bons_documents/3204.
-    On regarde my_answers sans le dernier terme. Si ce dernier terme est dans les bons résultats (qrels.text), alors on modifie le 
-    rappel et la précision, sinon seul la précision est modifiée.
-    On continue ainsi jusqu'à arriver à une liste my_answers de taille 1.
+    le rappel est alors à 1 et la précision à nb_de_bons_documents/3204. On note result = lentgh_answer.
+    On regarde my_answers sans le dernier doc. Si ce dernier doc est dans les bons résultats (qrels.text), alors on enlève 1 à result
+    et on modifie le rappel et la précision en conséquence, sinon seule la précision est modifiée.
+    On continue ainsi jusqu'à arriver à une liste my_answers de taille 1. La précision vaudra 1 si result vaut 1, 0 sinon.
     Ensuite on discrétise les résultats pour obtenir deux listes de taille 101 dont celle de rappel qui a un pas de 1/100.
 
     Cette méthode est très économe en calculs car on n'a pas à compter à chaque fois le nombre de bons résultats contenus dans
-    le résultat de taille k de la requête.
+    le résultat de taille k de la requête. Le parcours à l'envers de la liste des 3204 résultats permet une complexité linéaire.
     """
     requete_index = get_query_index(requete)
     answers = parse_qrels()[int(requete_index)]    #liste contenant les résultats de qrels.text associés à la requête
