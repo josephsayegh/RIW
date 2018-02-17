@@ -8,6 +8,13 @@ Moteur de recherche pour le cours de recherche d'information web.
 
 1) Nombre de tokens: 337 147
 2) Taille du vocabulaire: 24 745 048
+3) Pour la moitié de la collection:
+    * Nombre de tokens : 192 818
+    * Taille du vocabulaire: 14 053 911 
+Loi de Heap: 
+    * b = log(M1/M2)/log(T1/T2) = 1.0125
+    * k = 62.6
+4) M = k*T^b = 74 400 239
 5) ![alt text](stanford.png)
 
 
