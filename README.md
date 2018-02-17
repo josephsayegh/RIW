@@ -71,7 +71,7 @@ Lancer
 ```
 SplitandClean_queries.py
 ```
-Lancer 
+Puis
 ```
 rappel_precision.py
 ```
