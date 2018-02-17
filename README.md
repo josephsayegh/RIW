@@ -15,7 +15,9 @@ Loi de Heap:
     * b = log(M1/M2)/log(T1/T2) = 1.0125
     * k = 62.6
 4) M = k*T^b = 74 400 239
-5) ![alt text](stanford.png)
+5) ![alt text](freq-rang-stanford.png)
+![alt text](log-freq-log-rang-stanford.png)
+
 
 
 # Installation
