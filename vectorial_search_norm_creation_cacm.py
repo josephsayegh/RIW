@@ -28,14 +28,17 @@ def norm_build(inversed_index, collection):
     idf = {}
     w = []
     norm = {}
-    for term, term_postings in inversed_index.items():
-        for doc, doc_appearances in term_postings.items():
-            tf[term] = (doc, 1 + math.log10(doc_appearances))
-            idf[term] = math.log10(collection_length/len(term_postings))
-    for document in range(1, len(os.listdir(collection)) + 1):
+    for term in inversed_index.keys():
+        term_postings = inversed_index[term]
+        for doc in term_postings.keys():
+            doc_appearances = inversed_index[term][doc]
+            term_postings[doc] = 1 + math.log10(doc_appearances)
+        tf[term] = term_postings
+        idf[term] = math.log10(collection_length/len(term_postings))
+    for document in range(1, len(os.listdir(collection))):
         w.append(0)
         for term in get_terms_in_document(document, inversed_index):
-            w[document-1] += (tf[term][1] * idf[term]) ** 2
+            w[document-1] += (tf[term][document] * idf[term]) ** 2
         norm[document] = math.sqrt(w[document-1])
     return norm
 

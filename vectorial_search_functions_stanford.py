@@ -4,6 +4,7 @@ import math
 from nltk.tokenize import RegexpTokenizer
 import time
 import ast
+from boolean_research_functions_stanford import find_document_from_docid
 
 
 class NotInDictionaryError(Exception):
@@ -85,7 +86,7 @@ def vectorial_search(query, nb_of_results):
         return {}
     scores_tuples = sorted(scores_tuples, key=lambda colonnes: colonnes[1], reverse=True)
     for k in range(nb_of_results):
-        sorted_scores[k] = (scores_tuples[k][0], round(scores_tuples[k][1],2))
+        sorted_scores[k] = (find_document_from_docid([scores_tuples[k][0]],'Stanford_indexes/doc_id_dictionary')[0], round(scores_tuples[k][1],2))
     return sorted_scores
 
 

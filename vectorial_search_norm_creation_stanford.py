@@ -4,14 +4,12 @@ import pickle
 import math
 import ast
 import boolean_research_functions_stanford as br
-from nltk.tokenize import RegexpTokenizer
-import filemapper as fm
-from stanford_index_creator import read_document
+
 
 """
-ATTENTION, script très très long à compiler.
+Ce document permet le stockage dans un document à part de toutes les nomres de tous les documents. Ceci économise du temps
+de calcul pour la recherche vectorielle.
 """
-
 
 def get_terms_in_document(doc_id):
     """
@@ -37,27 +35,27 @@ def norm_build():
         idf = {}
         w = []
         norm = {}
-        vocabulary = []
         line = inversed_index.readline().strip()
-        while line != "":
-            posting_list = line.split("|")
-            vocabulary.append(posting_list[0])
-            for doc, doc_appearances in ast.literal_eval(posting_list[1]).items():
-                tf[posting_list[0]] = (doc, 1 + math.log10(doc_appearances))
-                idf[posting_list[0]] = math.log10(99004/len(posting_list[1]))
-            line = inversed_index.readline().strip()
         for document in range(1, 99005):
             w.append(0)
-            for term in get_terms_in_document(document):
-                if term in vocabulary:
-                    w[document-1] += (tf[term][1] * idf[term]) ** 2
+        while line != "":
+            posting_list = line.split("|")
+            dico = ast.literal_eval(posting_list[1])
+            for doc, doc_appearances in dico.items():
+                dico[doc] = 1 + math.log10(doc_appearances)
+            idf[posting_list[0]] = math.log10(99004/len(dico))
+            tf[posting_list[0]] = dico
+            for doc, doc_appearances in dico.items():
+                w[doc-1] += (tf[posting_list[0]][doc] * idf[posting_list[0]]) ** 2
+            line = inversed_index.readline().strip()
+        for document in range(1, 99005):
             norm[document] = math.sqrt(w[document-1])
     return norm
 
 
 if __name__ == "__main__":
 
-    norms2 = norm_build()
+    norms = norm_build()
     
     with open('Stanford/documents_norms', 'wb') as stanford_documents_norms:
-        pickle.dump(norms2, stanford_documents_norms, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(norms, stanford_documents_norms, protocol=pickle.HIGHEST_PROTOCOL)
