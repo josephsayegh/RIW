@@ -67,7 +67,7 @@ puis
 vectorial_search_functions_stanford.py
 ```
 Pour afficher la courbe de rappel-précision:
-Placer les deux docs query.text et qrels.text dans le dossier RIW. Lancer 
+Lancer 
 ```
 SplitandClean_queries.py
 ```
